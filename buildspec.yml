@@ -1,0 +1,27 @@
+version: 0.2  
+ 
+phases:
+  pre_build:
+    commands:
+      - echo PreBuild Started ...
+      - aws --version
+      - docker --version
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 194606914204.dkr.ecr.us-west-2.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building java
+      - mvn clean package
+      - echo Building the docker image
+      - docker build -t twitter .
+      - docker tag twitter:latest 194606914204.dkr.ecr.us-west-2.amazonaws.com/twitter:latest
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - docker push 194606914204.dkr.ecr.us-west-2.amazonaws.com/twitter:latest
+      - echo Writing definition files
+      - printf '[{"name":"twitter","imageUri":"%s"}]' 194606914204.dkr.ecr.us-west-2.amazonaws.com/twitter:latest > imagedefinition.json
+ 
+artifacts:
+  files:
+    - imagedefinition.json
